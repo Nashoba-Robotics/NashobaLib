@@ -29,9 +29,38 @@ public abstract class Climb {
         motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
     }
 
-    public void configLimitSwitch(int index, LimitSwitchConfig fuckBenLess){
+    public void configClosedLimitSwitch(int index, LimitSwitchConfig limitSwitchConfig){
         TalonFX motor = climbers.get(index);
-        
+        switch(limitSwitchConfig){
+            case FORWARD:
+                motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
+                break;
+
+            case REVERSE:
+                motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
+                break;
+        }
+    }
+
+    public void configClosedLimitSwitch(LimitSwitchConfig limitSwitchConfig){
+        configClosedLimitSwitch(0, limitSwitchConfig);
+    }
+
+    public void configOpenLimitSwitch(int index, LimitSwitchConfig limitSwitchConfig){
+        TalonFX motor = climbers.get(index);
+        switch(limitSwitchConfig){
+            case FORWARD:
+                motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
+                break;
+
+            case REVERSE:
+                motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
+                break;
+        }
+    }
+
+    public void configOpenLimitSwitch(LimitSwitchConfig limitSwitchConfig){
+        configOpenLimitSwitch(0, limitSwitchConfig);
     }
 
     //Uses motion magic to set the climber to specified NU
