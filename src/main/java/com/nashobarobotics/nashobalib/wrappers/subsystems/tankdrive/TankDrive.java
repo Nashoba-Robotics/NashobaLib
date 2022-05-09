@@ -150,6 +150,19 @@ public class TankDrive extends SubsystemBase {
         }
     }
 
+    public void setLeft(ControlMode mode, double input) {
+        leftLeader.set(mode, input);
+    }
+
+    public void setRight(ControlMode mode, double input) {
+        rightLeader.set(mode, input);
+    }
+
+    public void set(ControlMode mode, double input) {
+        setLeft(mode, input);
+        setRight(mode, input);
+    }
+
     public void setLeft(ControlMode mode, double input, double aff) {
         aff *= Math.signum(input);
         leftLeader.set(mode, input, DemandType.ArbitraryFeedForward, aff);
