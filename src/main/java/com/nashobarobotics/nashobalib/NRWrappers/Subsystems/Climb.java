@@ -3,21 +3,36 @@ package com.nashobarobotics.nashobalib.NRWrappers.Subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
+import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
+
 import java.util.ArrayList;
 
 public class Climb {
     private ArrayList<TalonFX> climbers;
+    private TalonFXConfiguration generalConfig; //Ben said I need this, so I made it
+                                                //Anything bad that comes out of this is Ben's fault
+    // private ArrayList<TalonFXConfiguration> configs;
+    private double defaultF;
+    private double defaultP;
+    private double defaultI;
+    private double defaultD;
+
     private static enum LimitSwitchConfig {
         FORWARD,
         REVERSE
     }
     
     public Climb(TalonFX... talons){
+        generalConfig = new TalonFXConfiguration();
         climbers = new ArrayList<>();
         for(TalonFX talon : talons){
             climbers.add(talon);
+            // configs.add(new TalonFXConfiguration());
         }
+
+        defaultConfig();
     }
 
 
@@ -38,15 +53,70 @@ public class Climb {
 
     };
 
-
-
     //Config:
-    //Configures each motor
-    public void config(){
-        
+    //Configures each motor to the default values
+    public void defaultConfig(){
+        for(TalonFX climber : climbers){
+            climber.configFactoryDefault();
+            climber.selectProfileSlot(0, 0);
+            climber.configAllSettings(generalConfig);
+            climber.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
+            climber.setSelectedSensorPosition(0);
+            climber.clearStickyFaults();
+            configPID(climber, defaultF, defaultP, defaultI, defaultD);
+        }
     }
 
+    //Configs PID values and Arbitrary Feet Forward for a specified motor
+    public void configPID(TalonFX talon, double kF, double kP, double kI, double kD){
+        talon.config_kF(0, kF);
+        talon.config_kP(0, kP);
+        talon.config_kI(0, kI);
+        talon.config_kD(0, kD);
+    }
 
+    public void configPID(int index, double kF, double kP, double kI, double kD){
+        configF(index, kF);
+        configP(index, kP);
+        configI(index, kI);
+        configD(index, kD);
+    }
+    
+    public void configPID(double kF, double kP, double kI, double kD){
+        configPID(0, kF, kP, kI, kD);
+    }
+
+    //Configs Aribtrary Feed Forward for specified motor
+    public void configF(int index, double value){
+        climbers.get(index).config_kF(0, value);
+    }
+    public void configF(double value){
+        configF(0, value);
+    }
+
+    //Configs P value for specified motor
+    public void configP(int index, double value){
+        climbers.get(index).config_kP(0, value);
+    }
+    public void configP(double value){
+        configP(0, value);
+    }
+
+    //Configs I value for specified motor
+    public void configI(int index, double value){
+        climbers.get(index).config_kI(0, value);
+    }
+    public void configI(double value){
+        configI(0, value);
+    }
+
+    //Configs D value for specified motor
+    public void configD(int index, double value){
+        climbers.get(index).config_kD(0, value);
+    }
+    public void configD(double value){
+        configD(0, value);
+    }
 
     //Limit Switches:
     //Configures a limit switch on a specified motor that is normally closed
