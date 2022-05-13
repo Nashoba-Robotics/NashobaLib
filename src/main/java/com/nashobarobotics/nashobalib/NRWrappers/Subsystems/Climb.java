@@ -6,7 +6,7 @@ import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
-public abstract class Climb {
+public class Climb {
     private ArrayList<TalonFX> climbers;
     private static enum LimitSwitchConfig {
         FORWARD,
@@ -20,15 +20,39 @@ public abstract class Climb {
         }
     }
 
-    public abstract void zer0();    //Zeroes the climber(s)
-    public abstract void deploy();  //The robot deploys the climber(s)
-    public abstract void climb();   //The robot pulls itself up
 
+    
+    //Climber Methods:
+    //Zeroes the climber(s)
+    public void zero(){
+        
+    };
+
+    //The robot deploys the climber(s)
+    public void deploy(){
+
+    };
+
+    //The robot pulls itself up
+    public void climb(){
+
+    };
+
+
+
+    //Config:
+    //Configures each motor
     public void config(){
-        TalonFX motor = new TalonFX(0);
-        motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
+        
     }
 
+
+
+    //Limit Switches:
+    //Configures a limit switch on a specified motor that is normally closed
+    //Requires a limit switch direction, which is either FORWARD or REVERSE
+    //Forward is if the motor has to run in a positive direction in order to hit the limit switch
+    //Reverse is if the motor has to run in a negative direction in order to hit the limit switch
     public void configClosedLimitSwitch(int index, LimitSwitchConfig limitSwitchConfig){
         TalonFX motor = climbers.get(index);
         switch(limitSwitchConfig){
@@ -46,6 +70,7 @@ public abstract class Climb {
         configClosedLimitSwitch(0, limitSwitchConfig);
     }
 
+    //Similar to configClosedLimitSwitch, but configures a limit switch that is usually open instead of closed
     public void configOpenLimitSwitch(int index, LimitSwitchConfig limitSwitchConfig){
         TalonFX motor = climbers.get(index);
         switch(limitSwitchConfig){
@@ -63,6 +88,47 @@ public abstract class Climb {
         configOpenLimitSwitch(0, limitSwitchConfig);
     }
 
+    //Sets the soft limit of a motor in the forward direction
+    public void configForwardSoftLimit(int index, double forwardSensorLimit){
+        climbers.get(index).configForwardSoftLimitEnable(true);
+        climbers.get(index).configForwardSoftLimitThreshold(forwardSensorLimit);
+    }
+
+    public void configForwardSoftLimit(double forwardSensorLimit){
+        configForwardSoftLimit(0, forwardSensorLimit);
+    }
+
+    //Disables the soft limit of a forward motor
+    public void disableForwardSoftLimit(int index){
+        climbers.get(index).configForwardSoftLimitEnable(false);
+    }
+
+    public void disableForwardSoftLimit(){
+        disableForwardSoftLimit(0);
+    }
+
+    //Sets the soft limit of a motor in the reverse direction
+    public void configReverseSoftLimit(int index, double reverseSensorLimit){
+        climbers.get(index).configReverseSoftLimitEnable(true);
+        climbers.get(index).configReverseSoftLimitThreshold(reverseSensorLimit);
+    }
+
+    public void configReverseSoftLimit(double reverseSensorLimit){
+        configReverseSoftLimit(0, reverseSensorLimit);
+    }
+
+    //Disables the soft limit of a reverse motor
+    public void disableReverseSoftLimit(int index){
+        climbers.get(index).configReverseSoftLimitEnable(false);
+    }
+
+    public void disableReverseSoftLimit(){
+        disableReverseSoftLimit(0);
+    }
+
+
+
+    //Using climbers:
     //Uses motion magic to set the climber to specified NU
     public void set(int index, int nu){ 
         climbers.get(index).set(ControlMode.MotionMagic, nu);
@@ -82,7 +148,16 @@ public abstract class Climb {
         set(0, cruiseVelocity, acceleration, nu);
     }
 
-    //Gets the native units of the specified climber
+    //Runs the motors using Percent Output for testing
+    public void test(int index, double speed){
+        climbers.get(index).set(ControlMode.PercentOutput, speed);
+    }
+
+    public void test(double speed){
+        test(0, speed);
+    }
+
+    //Returns the native units of the specified climber
     public double getNU(int index){
         return climbers.get(index).getSelectedSensorPosition();
     }
@@ -108,6 +183,4 @@ public abstract class Climb {
     public void setAccel(double sensorUnitsPer100ms){
         setAccel(0, sensorUnitsPer100ms);
     }
-
-    
 }
