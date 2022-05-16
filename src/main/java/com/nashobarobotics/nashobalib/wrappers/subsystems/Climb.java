@@ -1,4 +1,4 @@
-package com.nashobarobotics.nashobalib.NRWrappers.Subsystems;
+package com.nashobarobotics.nashobalib.wrappers.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
