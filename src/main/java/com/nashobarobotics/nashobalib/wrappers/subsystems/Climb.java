@@ -6,29 +6,27 @@ import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
+import com.nashobarobotics.nashobalib.PIDConfig;
 
 import java.util.ArrayList;
 
-public class Climb {
+public abstract class Climb {
     private ArrayList<TalonFX> climbers;
     private TalonFXConfiguration generalConfig; //Ben said I need this, so I made it
                                                 //Anything bad that comes out of this is Ben's fault
     // private ArrayList<TalonFXConfiguration> configs;
-    private double defaultF;
-    private double defaultP;
-    private double defaultI;
-    private double defaultD;
+    private PIDConfig defaultPID;
 
     private static enum LimitSwitchConfig {
         FORWARD,
         REVERSE
     }
     
-    public Climb(TalonFX... talons){
+    public Climb(int... ports){
         generalConfig = new TalonFXConfiguration();
         climbers = new ArrayList<>();
-        for(TalonFX talon : talons){
-            climbers.add(talon);
+        for(int n : ports){
+            climbers.add(new TalonFX(n));
             // configs.add(new TalonFXConfiguration());
         }
 
@@ -39,19 +37,13 @@ public class Climb {
     
     //Climber Methods:
     //Zeroes the climber(s)
-    public void zero(){
-        
-    };
+    public abstract void zero();
 
     //The robot deploys the climber(s)
-    public void deploy(){
-
-    };
+    public abstract void deploy();
 
     //The robot pulls itself up
-    public void climb(){
-
-    };
+    public abstract void climb();
 
     //Config:
     //Configures each motor to the default values
@@ -63,27 +55,27 @@ public class Climb {
             climber.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
             climber.setSelectedSensorPosition(0);
             climber.clearStickyFaults();
-            configPID(climber, defaultF, defaultP, defaultI, defaultD);
+            configPID(climber, defaultPID);
         }
     }
 
     //Configs PID values and Arbitrary Feet Forward for a specified motor
-    public void configPID(TalonFX talon, double kF, double kP, double kI, double kD){
-        talon.config_kF(0, kF);
-        talon.config_kP(0, kP);
-        talon.config_kI(0, kI);
-        talon.config_kD(0, kD);
+    public void configPID(TalonFX talon, PIDConfig pidConfig){
+        talon.config_kF(0, pidConfig.KF);
+        talon.config_kP(0, pidConfig.KP);
+        talon.config_kI(0, pidConfig.KI);
+        talon.config_kD(0, pidConfig.KD);
     }
 
-    public void configPID(int index, double kF, double kP, double kI, double kD){
-        configF(index, kF);
-        configP(index, kP);
-        configI(index, kI);
-        configD(index, kD);
+    public void configPID(int index, PIDConfig pidConfig){
+        configF(index, pidConfig.KF);
+        configP(index, pidConfig.KP);
+        configI(index, pidConfig.KI);
+        configD(index, pidConfig.KD);
     }
     
-    public void configPID(double kF, double kP, double kI, double kD){
-        configPID(0, kF, kP, kI, kD);
+    public void configPID(PIDConfig pidConfig){
+        configPID(0, pidConfig);
     }
 
     //Configs Aribtrary Feed Forward for specified motor

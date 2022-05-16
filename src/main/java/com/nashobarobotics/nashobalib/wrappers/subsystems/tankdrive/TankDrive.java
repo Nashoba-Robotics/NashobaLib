@@ -1,14 +1,10 @@
 package com.nashobarobotics.nashobalib.wrappers.subsystems.tankdrive;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.nashobarobotics.nashobalib.MotorGroup;
 import com.nashobarobotics.nashobalib.PIDConfig;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,12 +20,10 @@ public class TankDrive extends SubsystemBase {
     }
     
     // these are all of the left motors
-    protected TalonFX leftLeader;
-    protected List<TalonFX> leftFollowers = new ArrayList<>();
+    protected MotorGroup leftMotors;
 
     // these are all of the right motors
-    protected TalonFX rightLeader;
-    protected List<TalonFX> rightFollowers = new ArrayList<>();
+    protected MotorGroup rightMotors;
 
     // USE THIS CONSTRUCTOR IF NOT SPECIFYING CONFIGURATIONS
     // ports[] should follow format {leftLeader, leftFollowers...} and {rightLeader, rightFollowers...}
@@ -39,17 +33,8 @@ public class TankDrive extends SubsystemBase {
         String CANBus, TankDriveSide invertedSide
     ) {
 
-        leftLeader = new TalonFX(leftPorts[0], CANBus);
-        for(int i = 1; i < leftPorts.length; i++){
-            leftFollowers.add(new TalonFX(leftPorts[i], CANBus));
-            leftFollowers.get(i - 1).follow(leftLeader);
-        }
-
-        rightLeader = new TalonFX(rightPorts[0], CANBus);
-        for(int i = 1; i < rightPorts.length; i++){
-            rightFollowers.add(new TalonFX(rightPorts[i], CANBus));
-            rightFollowers.get(i - 1).follow(rightLeader);
-        }
+        leftMotors = new MotorGroup(leftPorts, CANBus);
+        rightMotors = new MotorGroup(rightPorts, CANBus);
 
         invertSide(invertedSide);
         
@@ -64,17 +49,8 @@ public class TankDrive extends SubsystemBase {
         TankDriveConfig config, NeutralMode neutralMode
     ) {
 
-        leftLeader = new TalonFX(leftPorts[0], CANBus);
-        for(int i = 1; i < leftPorts.length; i++){
-            leftFollowers.add(new TalonFX(leftPorts[i], CANBus));
-            leftFollowers.get(i - 1).follow(leftLeader);
-        }
-
-        rightLeader = new TalonFX(rightPorts[0], CANBus);
-        for(int i = 1; i < rightPorts.length; i++){
-            rightFollowers.add(new TalonFX(rightPorts[i], CANBus));
-            rightFollowers.get(i - 1).follow(rightLeader);
-        }
+        leftMotors = new MotorGroup(leftPorts, CANBus);
+        rightMotors = new MotorGroup(rightPorts, CANBus);
 
         config(config, neutralMode, invertedSide);
         
@@ -82,80 +58,46 @@ public class TankDrive extends SubsystemBase {
 
     public void config(TankDriveConfig config, NeutralMode neutralMode, TankDriveSide invertedSide) {
 
-        leftLeader.configFactoryDefault();
-        leftLeader.selectProfileSlot(0, 0);
-        leftLeader.configAllSettings(config.leftConfig);
-        leftLeader.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
-        leftLeader.setSelectedSensorPosition(0);
-        leftLeader.clearStickyFaults();
-
-        rightLeader.configFactoryDefault();
-        rightLeader.selectProfileSlot(0, 0);
-        rightLeader.configAllSettings(config.rightConfig);
-        rightLeader.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
-        rightLeader.setSelectedSensorPosition(0);
-        rightLeader.clearStickyFaults();
+        leftMotors.config(config.leftConfig, config.leftPID);
+        rightMotors.config(config.rightConfig, config.rightPID);
 
         invertSide(invertedSide);
         setNeutralMode(neutralMode);
-        configPID(config.leftPID, config.rightPID);
 
     }
 
     public void configPID(PIDConfig leftPID, PIDConfig rightPID) {
-        leftLeader.config_kF(0, leftPID.KF);
-        leftLeader.config_kP(0, leftPID.KP);
-        leftLeader.config_kI(0, leftPID.KI);
-        leftLeader.config_kD(0, leftPID.KD);
-
-        rightLeader.config_kF(0, rightPID.KF);
-        rightLeader.config_kP(0, rightPID.KP);
-        rightLeader.config_kI(0, rightPID.KI);
-        rightLeader.config_kD(0, rightPID.KD);
+        leftMotors.configPID(leftPID);
+        rightMotors.configPID(rightPID);
     }
 
     // this will set the side that is specified as inverted
     private void invertSide(TankDriveSide side) {
         switch(side) {
             case LEFT:
-                leftLeader.setInverted(InvertType.InvertMotorOutput);
-                for(TalonFX motor : leftFollowers) 
-                    motor.setInverted(InvertType.FollowMaster);
-
-                rightLeader.setInverted(InvertType.None);
-                for(TalonFX motor : rightFollowers) 
-                    motor.setInverted(InvertType.FollowMaster);
+                leftMotors.setInverted(InvertType.InvertMotorOutput);
+                rightMotors.setInverted(InvertType.None);
 
                 break;
             case RIGHT:
-                rightLeader.setInverted(InvertType.InvertMotorOutput);
-                for(TalonFX motor : rightFollowers) 
-                    motor.setInverted(InvertType.FollowMaster);
-
-                leftLeader.setInverted(InvertType.None);
-                for(TalonFX motor : leftFollowers) 
-                    motor.setInverted(InvertType.FollowMaster);
+                leftMotors.setInverted(InvertType.None);
+                rightMotors.setInverted(InvertType.InvertMotorOutput);
 
                 break;
             case NONE:
-                leftLeader.setInverted(InvertType.None);
-                for(TalonFX motor : leftFollowers) 
-                    motor.setInverted(InvertType.FollowMaster);
-
-                rightLeader.setInverted(InvertType.None);
-                for(TalonFX motor : rightFollowers) 
-                    motor.setInverted(InvertType.FollowMaster);
+                leftMotors.setInverted(InvertType.None);
+                rightMotors.setInverted(InvertType.None);
 
                 break;
         }
     }
 
     public void setLeft(ControlMode mode, double input) {
-        leftLeader.set(mode, input);
+        leftMotors.set(mode, input);
     }
 
     public void setRight(ControlMode mode, double input) {
-        rightLeader.set(mode, input);
+        rightMotors.set(mode, input);
     }
 
     public void set(ControlMode mode, double input) {
@@ -165,12 +107,12 @@ public class TankDrive extends SubsystemBase {
 
     public void setLeft(ControlMode mode, double input, double aff) {
         aff *= Math.signum(input);
-        leftLeader.set(mode, input, DemandType.ArbitraryFeedForward, aff);
+        leftMotors.set(mode, input, DemandType.ArbitraryFeedForward, aff);
     }
 
     public void setRight(ControlMode mode, double input, double aff) {
         aff *= Math.signum(input);
-        rightLeader.set(mode, input, DemandType.ArbitraryFeedForward, aff);
+        rightMotors.set(mode, input, DemandType.ArbitraryFeedForward, aff);
     }
 
     public void set(ControlMode mode, double input, double aff) {
@@ -179,45 +121,40 @@ public class TankDrive extends SubsystemBase {
     }
 
     public double getLeftMotorVelocity() {
-        return leftLeader.getSelectedSensorVelocity(0);
+        return leftMotors.getVelocity();
     }
 
     public double getRightMotorVelocity() {
-        return rightLeader.getSelectedSensorVelocity(0);
+        return rightMotors.getVelocity();
     }
 
     public double getLeftPosition() {
-        return leftLeader.getSelectedSensorPosition(0);
+        return leftMotors.getPosition();
     }
 
     public double getRightPosition() {
-        return rightLeader.getSelectedSensorPosition(0);
+        return rightMotors.getPosition();
     }
 
     public double getLeftStatorCurrent() {
-        return leftLeader.getStatorCurrent();
+        return leftMotors.getStatorCurrent();
     }
 
     public double getRightStatorCurrent() {
-        return rightLeader.getStatorCurrent();
+        return rightMotors.getStatorCurrent();
     }
 
     public double getLeftSupplyCurrent() {
-        return leftLeader.getSupplyCurrent();
+        return leftMotors.getSupplyCurrent();
     }
 
     public double getRightSupplyCurrent() {
-        return rightLeader.getSupplyCurrent();
+        return rightMotors.getSupplyCurrent();
     }
 
     public void setNeutralMode(NeutralMode neutralMode) {
-        leftLeader.setNeutralMode(neutralMode);
-        for(TalonFX motor : leftFollowers)
-            motor.setNeutralMode(neutralMode);
-
-        rightLeader.setNeutralMode(neutralMode);
-        for(TalonFX motor : rightFollowers)
-            motor.setNeutralMode(neutralMode);
+        leftMotors.setNeutralMode(neutralMode);
+        rightMotors.setNeutralMode(neutralMode);
     }
     
 }

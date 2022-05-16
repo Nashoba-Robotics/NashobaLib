@@ -3,15 +3,16 @@ package com.nashobarobotics.nashobalib;
 import java.util.List;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.DemandType;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
-import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 
 public class MotorGroup {
 
-    private TalonFX leader;
+    public TalonFX leader;  //Made public on purpose (wasn't a Ben moment) still do things to the leader that wasn't implemented into the code (I think I must repeat: This was NOT a Ben moment)
     private List<TalonFX> motorGroup;
 
     public MotorGroup(int[] ports){
@@ -35,18 +36,26 @@ public class MotorGroup {
 
     public void config(TalonFXConfiguration config, PIDConfig pidConfig) {
 
+        config(config);
+
+        configPID(pidConfig);
+
+    }
+
+    public void config(TalonFXConfiguration config) {
         leader.configFactoryDefault();
         leader.selectProfileSlot(0, 0);
         leader.configAllSettings(config);
         leader.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
         leader.setSelectedSensorPosition(0);
         leader.clearStickyFaults();
+    }
 
+    public void configPID(PIDConfig pidConfig) {
         leader.config_kF(0, pidConfig.KF);
         leader.config_kP(0, pidConfig.KP);
         leader.config_kI(0, pidConfig.KI);
         leader.config_kD(0, pidConfig.KD);
-
     }
 
     public void setNeutralMode(NeutralMode neutralMode) {
@@ -69,15 +78,15 @@ public class MotorGroup {
         }
     }
 
-    public void setInverted(TalonFXInvertType invertType) {
+    public void setInverted(InvertType invertType) {
         leader.setInverted(invertType);
 
         for(TalonFX motor : motorGroup) {
-            motor.setInverted(invertType);
+            motor.setInverted(InvertType.FollowMaster);
         }
     }
 
-    public void setInverted(TalonFXInvertType[] invertTypes) {
+    public void setInverted(InvertType[] invertTypes) {
         leader.setInverted(invertTypes[0]);
 
         for(int i = 1; i < invertTypes.length; i++) {
@@ -93,7 +102,7 @@ public class MotorGroup {
         leader.setInverted(invertType);
 
         for(TalonFX motor : motorGroup) {
-            motor.setInverted(invertType);
+            motor.setInverted(InvertType.FollowMaster);
         }
     }
 
@@ -111,6 +120,10 @@ public class MotorGroup {
 
     public void set(ControlMode controlMode, double value) {
         leader.set(controlMode, value);
+    }
+
+    public void set(ControlMode controlMode, double value, DemandType demandType, double demand) {
+        leader.set(controlMode, value, demandType, demand);
     }
 
     public double getPosition() {
